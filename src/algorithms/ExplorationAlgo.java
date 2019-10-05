@@ -59,12 +59,8 @@ public class ExplorationAlgo {
      * Method called to start the exploration.
      */
     public void runExploration() {
-        if (bot.getRealBot()) {
-            System.out.println("Starting calibration...");
-
-        }
-
-        System.out.println("Starting exploration...");
+    	
+    	System.out.println("Starting exploration...");
         System.out.println(bot.getRobotPosRow()+ "col"+ bot.getRobotPosCol());
 
         startTime = System.currentTimeMillis();
@@ -79,6 +75,286 @@ public class ExplorationAlgo {
         explorationLoop(bot.getRobotPosRow(), bot.getRobotPosCol());
     }
 
+    public int cCounterCorner = 0;
+    private int cCounterFlat = 0;
+     
+     public void doCalibration(DIRECTION robotDir, DIRECTION w1, DIRECTION w2) {
+     	 calibrationMode=true;
+     	 if (w1 == w2 && cCounterFlat >= 9 ) {
+     		 System.out.println("calculate area for cali"+ calculateAreaExplored());
+     	    // Single Calibration
+     		 
+     	    turnBotDirection(w1);
+     	    moveBot(MOVEMENT.CALIBRATE);
+     	    turnBotDirection(robotDir);
+     	    cCounterFlat = 0;
+     	    cCounterCorner = 0;
+     	 }   else if (cCounterCorner >=4 ){
+     		System.out.println("calculate area for cali"+ calculateAreaExplored());
+     	    // Double Calibration, TODO: Optimise
+     	    turnBotDirection(w1);
+     	    moveBot(MOVEMENT.CALIBRATE);
+     	    turnBotDirection(w2);
+     	    moveBot(MOVEMENT.CALIBRATE);
+     	    turnBotDirection(robotDir);
+     	    cCounterCorner = 0;
+     	    cCounterFlat = 0;
+     	 }
+     	 calibrationMode=false;
+     	}
+
+     	private void calibrateComplex() {
+     	    DIRECTION curDir = bot.getRobotCurDir();
+     	    int curRow = bot.getRobotPosRow();
+     	    int curCol = bot.getRobotPosCol();
+     	    DIRECTION w1;
+     	    
+     	    // Border Calibration
+     	    if (curRow == 1 || curRow == MapConstants.MAP_ROWS - 2 || curCol == 1 
+     	        || curCol == MapConstants.MAP_COLS - 2) {
+     	        // CORNER CALIBRATION
+     	        // Bottom-left
+     	        if (curRow == 1 && curCol == 1) {
+     	            doCalibration(curDir,DIRECTION.WEST,DIRECTION.SOUTH);
+     	            return;
+     	        } 
+     	        // Bottom-right
+     	        else if (curRow == 1 && curCol == MapConstants.MAP_COLS - 2) {
+     	            doCalibration(curDir,DIRECTION.SOUTH,DIRECTION.EAST);
+     	            return;
+     	        }
+     	        // Top-left
+     	        else if (curRow == MapConstants.MAP_ROWS - 2 && curCol == 1)  {
+     	            doCalibration(curDir,DIRECTION.NORTH,DIRECTION.WEST);
+     	            return;
+     	        }
+     	        // Top-right
+     	        else if (curRow == MapConstants.MAP_ROWS - 2 && curCol == MapConstants.MAP_COLS - 2) {
+     	            doCalibration(curDir,DIRECTION.EAST,DIRECTION.NORTH);
+     	            return;
+     	        }
+
+     	        // WALL CALIBRATION
+     	        // Bottom Wall
+     	        if (curRow == 1) {
+     	            w1 = DIRECTION.SOUTH;
+
+     	            // Check for Front Wall (RIGHT)
+     	            if (hasWall(curRow,curCol,DIRECTION.EAST)) {
+     	                doCalibration(curDir,w1,DIRECTION.EAST);
+     	                
+     	            }
+     	            else if (hasWall(curRow,curCol,DIRECTION.WEST)) {
+     	                doCalibration(curDir,w1,DIRECTION.WEST);
+     	                
+     	            }
+     	            else {
+     	                doCalibration(curDir,w1,w1);
+     	            }
+     	        }
+
+     	        // Right Wall
+     	        else if (curCol == MapConstants.MAP_COLS - 2) {
+     	            w1 = DIRECTION.EAST;
+
+     	            // Check for Front Wall (UP)
+     	            if (hasWall(curRow,curCol,DIRECTION.NORTH)) {
+     	                doCalibration(curDir,w1,DIRECTION.NORTH);
+     	            }
+     	            else if (hasWall(curRow,curCol,DIRECTION.SOUTH)) {
+     	                doCalibration(curDir,w1,DIRECTION.SOUTH);
+     	            }
+     	            else {
+     	                doCalibration(curDir,w1,w1);
+     	            }
+     	        }
+
+     	        // Top Wall
+     	        else if (curRow == MapConstants.MAP_ROWS - 2) {
+     	            w1 = DIRECTION.NORTH;
+
+     	            // Check for Front Wall (LEFT)
+     	            if (hasWall(curRow,curCol,DIRECTION.WEST)) {
+     	                doCalibration(curDir,w1,DIRECTION.WEST);
+     	            }
+     	            else if (hasWall(curRow,curCol,DIRECTION.EAST)) {
+     	                doCalibration(curDir,w1,DIRECTION.EAST);
+     	            }
+     	            else {
+     	                doCalibration(curDir,w1,w1);
+     	            }
+     	        }
+
+     	        // Left Wall
+     	        else if (curCol == 1) {
+     	            w1 = DIRECTION.WEST;
+
+     	            // Check for Front Wall (DOWN)
+     	            if (hasWall(curRow,curCol,DIRECTION.SOUTH)) {
+     	                doCalibration(curDir,w1,DIRECTION.SOUTH);
+     	            }
+     	            else if (hasWall(curRow,curCol,DIRECTION.NORTH)) {
+     	                doCalibration(curDir,w1,DIRECTION.NORTH);
+     	            }
+     	            else {
+     	                doCalibration(curDir,w1,w1);
+     	            }
+     	        }
+     	    }
+
+     	   //  Non-border Calibration
+     	    else {
+     	        boolean checkFront = false;
+     	        boolean checkRight = false;
+     	        boolean checkLeft = false;
+     	        DIRECTION front = curDir;
+     	        // TODO initalise
+     	        DIRECTION left = curDir;
+     	        DIRECTION right = curDir;
+
+     	        if (curDir == DIRECTION.NORTH) {
+     	            left = DIRECTION.WEST;
+     	            right = DIRECTION.EAST;
+     	        } 
+     	        else if (curDir == DIRECTION.SOUTH) {
+     	            left = DIRECTION.EAST;
+     	            right = DIRECTION.WEST;
+     	        }
+     	        else if (curDir == DIRECTION.EAST) {
+     	            left = DIRECTION.NORTH;
+     	            right = DIRECTION.SOUTH;
+     	        }
+     	        else if (curDir == DIRECTION.WEST) {
+     	            left = DIRECTION.SOUTH;
+     	            right = DIRECTION.NORTH;
+     	        }
+     	        
+     	        checkFront = hasWall(curRow,curCol,curDir);
+     	        checkRight = hasWall(curRow,curCol,right);
+     	        checkLeft = hasWall(curRow,curCol,left);
+     	        
+     	        System.out.println("FRONT: " + Boolean.toString(checkFront));
+     	        System.out.println("RIGHT: " + Boolean.toString(checkRight));
+     	        System.out.println("LEFT: " + Boolean.toString(checkLeft));
+
+     	        if (checkRight && checkFront) {
+     	            doCalibration(curDir,right,front);
+     	        	System.out.println("Right-Front wall calibration");
+     	        }
+     	        else if (checkLeft && checkFront) {
+     	            doCalibration(curDir,left,front);
+     	        	System.out.println("Left-Front wall calibration");
+     	        }
+     	        else if (checkFront) {
+     	        	doCalibration(curDir,front,front);
+     	        	System.out.println("Front wall calibration");
+     	        }
+     	        else if (checkRight) {
+     	        	doCalibration(curDir,right,right);
+     	        	System.out.println("Right wall calibration");
+     	        }
+     	        else if (checkLeft) {
+     	        	doCalibration(curDir,left,left);
+     	        	System.out.println("Left wall calibration");
+     	        }
+     	        else {
+     	        	System.out.println("No calibration around obstacles");
+     	        }
+     	    }
+     	}
+
+
+     	private boolean hasWall(int curRow, int curCol, DIRECTION dir) {
+     	    int r,c,i;
+     	    r = -1;
+     	    c = -1;
+     	    i = -1; 
+     	    Cell cell;
+
+     	    if (dir == DIRECTION.NORTH) {
+     	         r = curRow + 2;
+     	        for (i = -1; i <= 1; i ++) {
+     	        	c = curCol + i;
+     	        	cell = exploredMap.getCell(r, c);
+     	        	System.out.println("ROW: " + Integer.toString(r) + "COL: " + Integer.toString(c) + "HasOBSTACLE: " + cell.getIsObstacle());
+     	            if (!cell.getIsObstacle()) {
+     	                return false;
+     	            }
+     	        } 
+     	        return true;
+     	    }
+     	    else if (dir == DIRECTION.SOUTH) {
+     	        r = curRow - 2;
+     	        for (i = -1; i <= 1; i ++) {
+     	        	c = curCol + i;
+     	        	cell = exploredMap.getCell(r, c);
+     	        	System.out.println("ROW: " + Integer.toString(r) + "COL: " + Integer.toString(c) + "HasOBSTACLE: " + cell.getIsObstacle());
+     	            if (!cell.getIsObstacle()) {
+     	                return false;
+     	            }
+     	        }
+     	       return true;
+     	    }
+     	    else if (dir == DIRECTION.EAST) {
+     	        c = curCol + 2;
+     	        for (i = -1; i <= 1; i ++) {
+     	        	r = curRow + i;
+     	        	cell = exploredMap.getCell(r, c);
+     	        	System.out.println("ROW: " + Integer.toString(r) + "COL: " + Integer.toString(c) + "HasOBSTACLE: " + cell.getIsObstacle());
+     	            if (!cell.getIsObstacle()) {
+     	                return false;
+     	            }
+     	        }    
+     	       return true;
+     	    }
+     	    else if (dir == DIRECTION.WEST) {
+     	        c = curCol - 2;
+     	        for (i = -1; i <= 1; i ++) {
+     	        	r = curRow + i;
+     	        	cell = exploredMap.getCell(r, c);
+     	        	System.out.println("ROW: " + Integer.toString(r) + "COL: " + Integer.toString(c) + "HasOBSTACLE: " + cell.getIsObstacle());
+     	            if (!cell.getIsObstacle()) {
+     	                return false;
+     	            }
+     	        }
+     	       return true;
+     	    }
+     	    return false;
+     	}
+   
+     
+     private void calibrateCorner(DIRECTION robotDir) {
+     	int curRow= bot.getRobotPosRow();
+     	int curCol= bot.getRobotPosCol();
+     	DIRECTION curBotDir= robotDir;
+     	
+     	
+     	//if its at bottom right corner
+     	if(curBotDir== DIRECTION.EAST && curRow==1 && curCol==13) {
+     		calibrationMode=true;
+     		rightCalibrate();
+     	}
+     	//if its at bottom left corner
+     	else if(curBotDir== DIRECTION.SOUTH && curRow==1 && curCol==1) {
+     		calibrationMode=true;
+     		rightCalibrate();
+     		
+     	}
+     	//if its at top right corner
+     	else if (curBotDir== DIRECTION.NORTH && curRow==18 && curCol==13) {
+     		calibrationMode=true;
+     		rightCalibrate();
+     		
+     	}
+     	//if its at top left corner
+     	else if (curBotDir== DIRECTION.WEST && curRow==18 && curCol==1) {
+     		calibrationMode=true;
+     		rightCalibrate();
+     	}	
+     	
+     }
+
+    
     /**
      * Loops through robot movements until one (or more) of the following conditions is met:
      * 1. Robot is back at (r, c)
@@ -87,10 +363,17 @@ public class ExplorationAlgo {
      */
     private void explorationLoop(int r, int c) {
         do {
-        	
+            if(calibrationMode == false) {
+            	senseAndRepaint();
+            	System.out.println("After sense and repaint");
+            }
+            
+            calibrateComplex();
+            System.out.println("Calibrate done");
+        	cCounterFlat ++;
+        	cCounterCorner ++; 
         	nextMove();
-        	//calibrate90();
-        	//System.out.println("calibrating");
+        	
             
             exploredArea = calculateAreaExplored();
             double areaExplored = (double) exploredArea;
@@ -220,7 +503,9 @@ public class ExplorationAlgo {
      * Returns true if the robot is free to move forward.
      */
     private boolean checkForward() {
-    //	System.out.println("Bot Current Direction: "+ bot.getRobotCurDir());
+    	// TODO
+    	System.out.println("Bot Current Direction: "+ bot.getRobotCurDir());
+    	System.out.println(eastFree());
         switch (bot.getRobotCurDir()) {
             case NORTH:
                 return northFree();
@@ -460,12 +745,12 @@ public class ExplorationAlgo {
         
         System.out.println("moveBot function");
 
-        
-        /*if(calibrationMode == false) {
-        	senseAndRepaint();
-        }*/
-        senseAndRepaint();
-        System.out.println("After sense and repaint");
+       
+//        if(calibrationMode == false) {
+//        	senseAndRepaint();
+//        }
+//        
+//        System.out.println("After sense and repaint");
     	System.out.println("Startin Cali");
     	//calibration();
     	//calibrationMode=false;
@@ -497,6 +782,7 @@ public class ExplorationAlgo {
         //calibrate90();
         
         exploredMap.repaint();
+       
     }
 
     /**
@@ -551,28 +837,34 @@ public class ExplorationAlgo {
 
         turnBotDirection(targetDir);
         System.out.println("new dir"+ bot.getRobotCurDir());
-        if (robotFrontWall==true && robotRightWall==true) {
-        	moveBot(MOVEMENT.CALIBRATE);
-        	turnBotDirection(origDir);
-        	moveBot(MOVEMENT.CALIBRATE);
-        	return;
-        	
-        }
-        if(robotRightWall==true) {
-        	moveBot(MOVEMENT.CALIBRATE);
-        	turnBotDirection(origDir);
-        	return;
-        }
-        if( robotFrontWall==true) {
-        	
-        	moveBot(MOVEMENT.CALIBRATE);
-        	
-        	turnBotDirection(origDir);
-        	return;
-        }
-        
-        
+        moveBot(MOVEMENT.CALIBRATE);
+        turnBotDirection(origDir);
+        moveBot(MOVEMENT.CALIBRATE);
     }
+//        if (robotFrontWall==true && robotRightWall==true) {
+//        	moveBot(MOVEMENT.CALIBRATE);
+//        	turnBotDirection(origDir);
+//        	moveBot(MOVEMENT.CALIBRATE);
+//        	return;
+//        	
+//        }
+//        
+//        if(robotRightWall==true) {
+//        	moveBot(MOVEMENT.CALIBRATE);
+//        	turnBotDirection(origDir);
+//        	return;
+//        }
+//        if( robotFrontWall==true) {
+//        	
+//        	moveBot(MOVEMENT.CALIBRATE);
+//        	
+//        	turnBotDirection(origDir);
+//        	return;
+//        }
+//        
+        
+        
+    
 
     /**
      * The robot turns to the required direction.
@@ -595,7 +887,7 @@ public class ExplorationAlgo {
             moveBot(MOVEMENT.RIGHT);
             moveBot(MOVEMENT.RIGHT);
         }
-        calibrateCounter -= numOfTurn;
+       // calibrateCounter -= numOfTurn;
     }
     
     
@@ -904,74 +1196,67 @@ public class ExplorationAlgo {
     	//CommMgr.getCommMgr().sendMsg("AR","cali", "R");
     	System.out.println("next dir "+ nextDir);
     	calibrateBot(nextDir);
+    	calibrationMode=false;
 		//CommMgr.getCommMgr().sendMsg("AR","cali", "R"); //send to arduino that we need cali on right side 
     }
 
-   
-    // Jesslyn's Calibration Code 
-    private static boolean frontWallCalibrate = false;
-    private static boolean leftWallCalibrate = false;
-    private static boolean rightWallCalibrate = false;
-    
-    private void checkCalibrationType(DIRECTION robotDir) {
-    	int curRow= bot.getRobotPosRow();
-    	int curCol= bot.getRobotPosCol();
-    	
-    	
-    }
-    private void leftWall(DIRECTION robotDir) {
-    	int curRow= bot.getRobotPosRow();
-    	int curCol= bot.getRobotPosCol();
-    	DIRECTION curDir= robotDir;
-    	robotLeftWall=false;
-    	if(curDir== DIRECTION.WEST) {
-    		if(isExploredAndWall(curRow-1, curCol)&&
-					isExploredAndWall(curRow-1, curCol-1) &&
-					isExploredAndWall(curRow-1,curCol+1) &&
-    				isExploredAndWall(curRow-1, curCol-2) &&
-    				isExploredAndWall(curRow-1, curCol+2)
-    		){
-    			robotLeftWall=true;
-			
-			}
-    	}
-    	if(curDir== DIRECTION.NORTH) {
-    		if(isExploredAndWall(curRow-1, curCol-1)&&
-					isExploredAndWall(curRow+1, curCol-1) &&
-					isExploredAndWall(curRow,curCol-1) &&
-    				isExploredAndWall(curRow-2, curCol-1) &&
-    				isExploredAndWall(curRow+2, curCol-1)
-    		){
-    			robotLeftWall=true;
-			
-			}
-    	}
-    	if(curDir== DIRECTION.SOUTH) {
-    		if(isExploredAndWall(curRow-1, curCol+1)&&
-					isExploredAndWall(curRow+1, curCol+1) &&
-					isExploredAndWall(curRow,curCol+1) && 
-    				isExploredAndWall(curRow-2, curCol+1) &&
-    				isExploredAndWall(curRow+2, curCol+1)
-    		){
-    			robotLeftWall=true;
-			
-			}
-    	}
-    	if(curDir== DIRECTION.EAST) {
-    		if(isExploredAndWall(curRow+1, curCol)&&
-					isExploredAndWall(curRow+1, curCol-1) &&
-					isExploredAndWall(curRow+1,curCol+1) &&
-    				isExploredAndWall(curRow+1, curCol-2) &&
-    				isExploredAndWall(curRow+1, curCol+2)
-    		){
-    			robotLeftWall=true;
-			
-			}
-    	}
-    	
-    }
     
     
+//    private void leftWall(DIRECTION robotDir) {
+//    	int curRow= bot.getRobotPosRow();
+//    	int curCol= bot.getRobotPosCol();
+//    	DIRECTION curDir= robotDir;
+//    	robotLeftWall=false;
+//    	if(curDir== DIRECTION.WEST) {
+//    		if(isExploredAndWall(curRow-1, curCol)&&
+//					isExploredAndWall(curRow-1, curCol-1) &&
+//					isExploredAndWall(curRow-1,curCol+1) &&
+//    				isExploredAndWall(curRow-1, curCol-2) &&
+//    				isExploredAndWall(curRow-1, curCol+2)
+//    		){
+//    			robotLeftWall=true;
+//			
+//			}
+//    	}
+//    	if(curDir== DIRECTION.NORTH) {
+//    		if(isExploredAndWall(curRow-1, curCol-1)&&
+//					isExploredAndWall(curRow+1, curCol-1) &&
+//					isExploredAndWall(curRow,curCol-1) &&
+//    				isExploredAndWall(curRow-2, curCol-1) &&
+//    				isExploredAndWall(curRow+2, curCol-1)
+//    		){
+//    			robotLeftWall=true;
+//			
+//			}
+//    	}
+//    	if(curDir== DIRECTION.SOUTH) {
+//    		if(isExploredAndWall(curRow-1, curCol+1)&&
+//					isExploredAndWall(curRow+1, curCol+1) &&
+//					isExploredAndWall(curRow,curCol+1) && 
+//    				isExploredAndWall(curRow-2, curCol+1) &&
+//    				isExploredAndWall(curRow+2, curCol+1)
+//    		){
+//    			robotLeftWall=true;
+//			
+//			}
+//    	}
+//    	if(curDir== DIRECTION.EAST) {
+//    		if(isExploredAndWall(curRow+1, curCol)&&
+//					isExploredAndWall(curRow+1, curCol-1) &&
+//					isExploredAndWall(curRow+1,curCol+1) &&
+//    				isExploredAndWall(curRow+1, curCol-2) &&
+//    				isExploredAndWall(curRow+1, curCol+2)
+//    		){
+//    			robotLeftWall=true;
+//			
+//			}
+//    	}
+//    	
+//    }
+//    
+//    
    
     
 }
+
+

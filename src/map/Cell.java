@@ -86,9 +86,9 @@ public class Cell {
     }
 
     public boolean isPhantomWall() {
-        if (obstacleChanges >= 6) {
+        if (obstacleChanges >= 2) {
             System.out.println(String.format("Detected an Phantom wall at Row %d Col %d ,Num of Changes: ", row, col, obstacleChanges));
         }
-        return obstacleChanges >= 6;
+        return obstacleChanges >= 2;
     }
 }

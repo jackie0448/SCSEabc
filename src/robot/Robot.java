@@ -445,7 +445,7 @@ public class Robot {
 	          /*  }*/
 //                System.out.println("test for Map"+MapDescriptor.generateMapForAndroid(explorationMap));
 	        	System.out.println("before sending msg to AN");
-	        	//comm.sendMsg("AN",null,androidStrings[0] + "," + androidStrings[1]);
+	        	comm.sendMsg("AN",null,androidStrings[0] + "," + androidStrings[1]);
 	        	
 	        	//comm.sendMsg("AN", "test", "AAA");
 	        	System.out.println("after sending msg to AN");

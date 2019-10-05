@@ -9,6 +9,7 @@ import map.Map;
 import map.MapConstants;
 import robot.Robot;
 import robot.RobotConstants;
+import robot.RobotConstants.DIRECTION;
 import utils.CommMgr;
 
 import javax.swing.*;
@@ -18,6 +19,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.concurrent.TimeUnit;
 
 import static utils.MapDescriptor.generateMapDescriptor;
 import static utils.MapDescriptor.loadMapFromDisk;
@@ -87,6 +89,16 @@ public class Simulator {
         		bot, coverageLimit, timeLimit);
         
         fastestPath= new YcFastestPath(exploredMap,bot);
+        if (realRun) {
+        	try {
+        		TimeUnit.SECONDS.sleep(3);
+        	} catch (InterruptedException ie) {
+        	    Thread.currentThread().interrupt();
+        	}
+        	System.out.println("Starting calibration");
+        	exploration.cCounterCorner = 100;
+        	exploration.doCalibration(bot.getRobotCurDir(),DIRECTION.SOUTH,DIRECTION.WEST);
+        }
 
         displayEverything();
 
@@ -104,94 +116,94 @@ public class Simulator {
             }
         });
         //testConnectionThread.start(); -commented to remove message
-//	    if (realRun) {
-//	    	class realFastestPath extends SwingWorker<Integer, String> {
-//		    	protected Integer doInBackground() throws Exception {
-//			    	bot.setRobotPos(RobotConstants.START_ROW, RobotConstants.START_COL);
-//			        exploredMap.repaint();
-//			
-//		            while (true) {
-//		                System.out.println("Waiting for FP_START...");
-//		                String msg = comm.recvMsg();
-//		                if (msg.contains("f")) {
-//		                    try {
-//		                        String wpCoord = msg.substring(8);
-//		                        System.out.println("Waypoint: " + wpCoord);
-//		                        String[] wpXy = wpCoord.split(",");
-//		                        Simulator.wpx = Integer.parseInt(wpXy[0]);
-//		                        Simulator.wpy = Integer.parseInt(wpXy[1]);
-//		                    } catch (Exception e) {
-//		                    }
-//		                    break;
-//		                }
-//			        }
-//			
-//			        /*
-//			        bot.setBotToFake();
-//			        FastestPathAlgo fastestPath = new FastestPathAlgo(exploredMap, bot);
-//			        fastestPath.runFastestPath(Simulator.wpy, Simulator.wpx + 5);
-//			        exploredMap.setAllExplored();
-//			        */
-//			
-//			        YcFastestPath fastestPath;
-//			        fastestPath= new YcFastestPath(exploredMap,bot);
-//			        
-//			        int waypointRow = RobotConstants.GOAL_ROW;
-//			        int waypointCol = RobotConstants.GOAL_COL;
-//			        
-//			        fastestPath.runfastestPath(RobotConstants.START_ROW, RobotConstants.START_COL,waypointRow,waypointCol ,RobotConstants.GOAL_ROW,RobotConstants.GOAL_COL);
-//			
-//			        return 111;
-//			    }
-//		    }
-//	    	
-//	    	class realExploration extends SwingWorker<Integer, String> {
-//		    	protected Integer doInBackground() throws Exception {
-//			    	int row, col;
-//			
-//			        row = RobotConstants.START_ROW;
-//			        col = RobotConstants.START_COL;
-//			
-//			        bot.setRobotPos(row, col);
-//			        
-//			        exploredMap.setStart(true); //added to paint free cell
-//			        exploredMap.repaint();
-//			
-//			
-//			
-//			        
-//			         //may need to change because no need coveragelimit and timelimit
-//			       
-//			
-//			        testConnection = false;
-//			
-//			        exploration.runExploration();
-//			        generateMapDescriptor(exploredMap);
-//			
-//			        //comm.sendMsg(null, CommMgr.EX_DONE);
-//			
-//			        //comm.sendMsg("AAS", CommMgr.INSTRUCTIONS);
-//			
-//			        new realFastestPath().execute();
-//			
-//			        return 222;
-//			    }
-//		    }
-//        	while (true) {
-//	            System.out.println("Waiting1 for EX_START...");
-//	            String msg = comm.recvMsg();
-//	            System.out.println(msg);
-//	            
-//	            if (msg.equals("x")) break;
-//	        }
-//        	try {
-//        		System.out.println("before explo");
-//        		new realExploration().execute();
-//        	} catch(Exception e) {
-//        		System.out.println(" RealExploration Exception");
-//        	}
-//	    }
-//    
+	    if (realRun) {
+	    	class realFastestPath extends SwingWorker<Integer, String> {
+		    	protected Integer doInBackground() throws Exception {
+			    	bot.setRobotPos(RobotConstants.START_ROW, RobotConstants.START_COL);
+			        exploredMap.repaint();
+			
+		            while (true) {
+		                System.out.println("Waiting for FP_START...");
+		                String msg = comm.recvMsg();
+		                if (msg.contains("f")) {
+		                    try {
+		                        String wpCoord = msg.substring(8);
+		                        System.out.println("Waypoint: " + wpCoord);
+		                        String[] wpXy = wpCoord.split(",");
+		                        Simulator.wpx = Integer.parseInt(wpXy[0]);
+		                        Simulator.wpy = Integer.parseInt(wpXy[1]);
+		                    } catch (Exception e) {
+		                    }
+		                    break;
+		                }
+			        }
+			
+			        /*
+			        bot.setBotToFake();
+			        FastestPathAlgo fastestPath = new FastestPathAlgo(exploredMap, bot);
+			        fastestPath.runFastestPath(Simulator.wpy, Simulator.wpx + 5);
+			        exploredMap.setAllExplored();
+			        */
+			
+			        YcFastestPath fastestPath;
+			        fastestPath= new YcFastestPath(exploredMap,bot);
+			        
+			        int waypointRow = RobotConstants.GOAL_ROW;
+			        int waypointCol = RobotConstants.GOAL_COL;
+			        
+			        fastestPath.runfastestPath(RobotConstants.START_ROW, RobotConstants.START_COL,waypointRow,waypointCol ,RobotConstants.GOAL_ROW,RobotConstants.GOAL_COL);
+			
+			        return 111;
+			    }
+		    }
+	    	
+	    	class realExploration extends SwingWorker<Integer, String> {
+		    	protected Integer doInBackground() throws Exception {
+			    	int row, col;
+			
+			        row = RobotConstants.START_ROW;
+			        col = RobotConstants.START_COL;
+			
+			        bot.setRobotPos(row, col);
+			        
+			        exploredMap.setStart(true); //added to paint free cell
+			        exploredMap.repaint();
+			
+			
+			
+			        
+			         //may need to change because no need coveragelimit and timelimit
+			       
+			
+			        testConnection = false;
+			
+			        exploration.runExploration();
+			        generateMapDescriptor(exploredMap);
+			
+			        //comm.sendMsg(null, CommMgr.EX_DONE);
+			
+			        //comm.sendMsg("AAS", CommMgr.INSTRUCTIONS);
+			
+			        new realFastestPath().execute();
+			
+			        return 222;
+			    }
+		    }
+        	while (true) {
+	            System.out.println("Waiting1 for EX_START...");
+	            String msg = comm.recvMsg();
+	            System.out.println(msg);
+	            
+	            if (msg.equals("x")) break;
+	        }
+        	try {
+        		System.out.println("before explo");
+        		new realExploration().execute();
+        	} catch(Exception e) {
+        		System.out.println(" RealExploration Exception");
+        	}
+	    }
+    
 	    
     }
 
